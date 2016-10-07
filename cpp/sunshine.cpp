@@ -17,7 +17,7 @@ double avg_sunshine(location & loc){
 
 double is_user_authorized(string usr, string pwd){
     double res = 0;
-    if (usr == "you sexy" && pwd == "string"){
+    if (usr == "you sexy" && pwd == "code"){
         res = 1;
     }
     return res;

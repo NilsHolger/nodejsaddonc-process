@@ -1,11 +1,9 @@
 {
     "targets": [
         {
-            "target_name" : "sunshine"  ,
-            "sources" : ["sunshine.cpp", "sunshine_node.cpp"],
+            "target_name" : "sunshineasync"  ,
+            "sources" : ["sunshine_node_async.cpp", "sunshine.cpp"],
             "cflags": ["-Wall", "-std=c++11"]
         }
     ]
-
-
 }
