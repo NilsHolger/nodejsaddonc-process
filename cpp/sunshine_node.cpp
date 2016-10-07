@@ -49,16 +49,28 @@ void AvgSunshine(const v8::FunctionCallbackInfo<v8::Value>& args){
     location loc = unpack_location(isolate, args);
     double avg = avg_sunshine(loc);
 
-
     Local<Number> retVal = v8::Number::New(isolate, avg);
     args.GetReturnValue().Set(retVal);
+}
 
+void SimpleLoginSync(const v8::FunctionCallbackInfo<v8::Value>& args){
+    Isolate * isolate = args.GetIsolate();
+
+    v8::String::Utf8Value param1(args[0]->ToString());
+    std::string user = std::string(*param1);
+    v8::String::Utf8Value param2(args[1]->ToString());
+    std::string pwd = std::string(*param2); 
+    //it's a secret
+    double result = is_user_authorized(user, pwd);
+    Local<Number> retVal = v8::Number::New(isolate, result);
+    args.GetReturnValue().Set(retVal);
 }
 
 
 void init(Handle<Object> exports, Handle<Object> module){
     //register function to make it callable from node here
     NODE_SET_METHOD(exports, "avg_sunshine", AvgSunshine);
+    NODE_SET_METHOD(exports, "simple_login_sync", SimpleLoginSync);
 
 }
 

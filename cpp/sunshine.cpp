@@ -1,6 +1,7 @@
 #include "sunshine.h"
 #include <algorithm>
 #include <cmath>
+#include <string>
 
 bool operator<(const sample &s1, const sample &s2){
     return s1.sunshine < s2.sunshine;
@@ -12,6 +13,14 @@ double avg_sunshine(location & loc){
         total += sample.sunshine;
     }
     return total / loc.samples.size();
+}
+
+double is_user_authorized(string usr, string pwd){
+    double res = 0;
+    if (usr == "you sexy" && pwd == "string"){
+        res = 1;
+    }
+    return res;
 }
 
 sunshine_result calc_sunshine_stats(location &loc){

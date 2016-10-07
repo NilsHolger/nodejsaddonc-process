@@ -37,6 +37,8 @@ class sunshine_result {
 //will return the arithmetic mean sunshine for the given location
 double avg_sunshine(location & loc); //code in sunshine.cpp
 
+double is_user_authorized(string user, string pwd);
+
 sunshine_result calc_sunshine_stats(location &loc);
 
 //may you be blessed with love, happiness and health friend 

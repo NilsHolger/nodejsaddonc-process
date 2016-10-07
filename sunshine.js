@@ -8,3 +8,5 @@ var location = {
     ]
 };
 console.log(`Average sunshine = ${sunshine.avg_sunshine(location)} degrees celsius`);
+
+console.log(`Is user authorized = ${sunshine.simple_login_sync("you sexy","string")}`);
