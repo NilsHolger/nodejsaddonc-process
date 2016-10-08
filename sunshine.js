@@ -1,8 +1,5 @@
 var sunshine = require("./cpp/build/Release/sunshine");
 
-// var makeup = function(max){
-//     return Math.round(max * Math.random() * 100 ) / 100;
-// }
 var random = function(max, min = 0){
       return (Math.random() * (max - min) + min).toFixed(2);
 }
@@ -39,7 +36,7 @@ results.forEach((result) => {
     console.log(`\tLongitude:          ${locations[i].longitude}`);
     console.log(`\tMean Sunshine:      ${result.mean.toFixed(2)} °C`);
     console.log(`\tMedian Sunshine:    ${result.median.toFixed(2)} °C`);
-    console.log(`\tStandard Deviation: ${result.standard_deviation.toFixed(2)}°C`);
+    console.log(`\tStandard Deviation: ${result.standard_deviation.toFixed(2)}  °C`);
     console.log(`\tNumber of Samples:  ${result.n}`);
     console.log();
     i++;
