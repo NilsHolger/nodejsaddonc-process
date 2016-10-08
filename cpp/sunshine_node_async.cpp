@@ -81,6 +81,6 @@ namespace loginAsyncAddon {
     NODE_SET_METHOD(exports, "logInAsync", LoginAsync);
   }
 
-  NODE_MODULE(sunshineasync, init)
+  NODE_MODULE(sunshine, init)
 
 } 

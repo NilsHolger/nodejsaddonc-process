@@ -15,3 +15,7 @@ this allows the node application to continue on doing its business while c++ pro
 for example computational intensive operations and so forth
 
 observe there is no exception handling
+
+to use the two addons
+in binding.gyp sources property specify the file names to include
+the target name must match the name of the addon provided in the v8 class
