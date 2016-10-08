@@ -1,8 +1,17 @@
 #include <node.h>
 #include <v8.h>
 #include "sunshine.h"
+#include <uv.h>
+#include <string>
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <chrono>
+#include <thread>
 
 using namespace v8;
+
+void pack_sunshine_results(v8::Isolate* isolate, v8::Local<v8::Object> & target, sunshine_result & result);
 
 sample unpack_sample(Isolate * isolate, const Handle<Object> sample_obj){
 
@@ -19,10 +28,8 @@ sample unpack_sample(Isolate * isolate, const Handle<Object> sample_obj){
             return s;
 }
 
-location unpack_location(Isolate * isolate, const v8::FunctionCallbackInfo<v8::Value>& args){
-
+location unpack_location(Isolate * isolate, const Handle<Object> location_obj){
         location loc;
-        Handle<Object> location_obj = Handle<Object>::Cast(args[0]);
         Handle<Value> lat_value =
         location_obj->Get(String::NewFromUtf8(isolate, "latitude"));
         Handle<Value> lon_value =
@@ -46,7 +53,7 @@ void AvgSunshine(const v8::FunctionCallbackInfo<v8::Value>& args){
 
     Isolate * isolate = args.GetIsolate();
 
-    location loc = unpack_location(isolate, args);
+    location loc = unpack_location(isolate, Handle<Object>::Cast(args[0]));
     double avg = avg_sunshine(loc);
 
     Local<Number> retVal = v8::Number::New(isolate, avg);
@@ -66,10 +73,17 @@ void SimpleLoginSync(const v8::FunctionCallbackInfo<v8::Value>& args){
     args.GetReturnValue().Set(retVal);
 }
 
+void pack_sunshine_results(v8::Isolate* isolate, v8::Local<v8::Object> & target, sunshine_result & result){
+    target->Set(String::NewFromUtf8(isolate, "mean"), Number::New(isolate, result.mean));
+    target->Set(String::NewFromUtf8(isolate, "median"), Number::New(isolate, result.median));
+    target->Set(String::NewFromUtf8(isolate, "standard_deviation"), Number::New(isolate, result.standard_deviation));
+    target->Set(String::NewFromUtf8(isolate, "n"), Integer::New(isolate, result.n));
+}
+
 void SunshineData(const v8::FunctionCallbackInfo<v8::Value>& args){
     Isolate * isolate = args.GetIsolate();
 
-    location loc = unpack_location(isolate, args);
+    location loc = unpack_location(isolate, Handle<Object>::Cast(args[0]));
     sunshine_result result = calc_sunshine_stats(loc);
 
     //create a new object on the V8 heap
@@ -84,13 +98,43 @@ void SunshineData(const v8::FunctionCallbackInfo<v8::Value>& args){
     args.GetReturnValue().Set(obj);
 }
 
+void CalculateResults(const v8::FunctionCallbackInfo<v8::Value>&args){
+    Isolate * isolate = args.GetIsolate();
+
+    Local<Array> input = Local<Array>::Cast(args[0]);
+    unsigned int num_locations = input->Length();
+
+    std::vector<location> locations;    //get this from node
+    std::vector<sunshine_result> results; //get this from c++
+
+    for (unsigned int i = 0; i < num_locations; i++){
+        locations.push_back(unpack_location(isolate, Local<Object>::Cast(input->Get(i))));
+    };
+    results.resize(locations.size());
+    std::transform(locations.begin(), locations.end(), results.begin(), calc_sunshine_stats);
+    
+    //populate this with the results
+    Local<Array> result_list = Array::New(isolate);
+
+    for (unsigned int i = 0; i < results.size(); i++){
+        Local<Object> result = Object::New(isolate);
+        pack_sunshine_results(isolate, result, results[i]);
+        result_list->Set(i, result);
+    }
+
+
+    //send it back to node as the return Value
+    args.GetReturnValue().Set(result_list);
+
+}
+
 
 void init(Handle<Object> exports, Handle<Object> module){
-    //register function to make it callable from node here
+    //register functions to make them callable from node here
     NODE_SET_METHOD(exports, "avg_sunshine", AvgSunshine);
     NODE_SET_METHOD(exports, "simple_login_sync", SimpleLoginSync);
     NODE_SET_METHOD(exports, "sunshine_data", SunshineData);
-
+    NODE_SET_METHOD(exports, "calculate_results", CalculateResults); //it's all about producing results: improve, improve, improve
 }
 
 //associate the module name with initialization logic
