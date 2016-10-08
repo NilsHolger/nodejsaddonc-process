@@ -66,11 +66,30 @@ void SimpleLoginSync(const v8::FunctionCallbackInfo<v8::Value>& args){
     args.GetReturnValue().Set(retVal);
 }
 
+void SunshineData(const v8::FunctionCallbackInfo<v8::Value>& args){
+    Isolate * isolate = args.GetIsolate();
+
+    location loc = unpack_location(isolate, args);
+    sunshine_result result = calc_sunshine_stats(loc);
+
+    //create a new object on the V8 heap
+    Local<Object> obj = Object::New(isolate);
+    //transfer data from result to object
+    obj->Set(String::NewFromUtf8(isolate, "mean"), Number::New(isolate, result.mean));
+    obj->Set(String::NewFromUtf8(isolate, "median"), Number::New(isolate, result.median));
+    obj->Set(String::NewFromUtf8(isolate, "standard_deviation"), Number::New(isolate, result.standard_deviation));
+    obj->Set(String::NewFromUtf8(isolate, "n"), Integer::New(isolate, result.n));
+
+    //return the the object to JAVASCRIPT
+    args.GetReturnValue().Set(obj);
+}
+
 
 void init(Handle<Object> exports, Handle<Object> module){
     //register function to make it callable from node here
     NODE_SET_METHOD(exports, "avg_sunshine", AvgSunshine);
     NODE_SET_METHOD(exports, "simple_login_sync", SimpleLoginSync);
+    NODE_SET_METHOD(exports, "sunshine_data", SunshineData);
 
 }
 
