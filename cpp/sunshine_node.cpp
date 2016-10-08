@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <chrono>
 #include <thread>
+#include <windows.h>
 
 using namespace v8;
 
@@ -67,7 +68,7 @@ void SimpleLoginSync(const v8::FunctionCallbackInfo<v8::Value>& args){
     std::string user = std::string(*param1);
     v8::String::Utf8Value param2(args[1]->ToString());
     std::string pwd = std::string(*param2); 
-    //it's a secret
+    //she has so many secrets
     double result = is_user_authorized(user, pwd);
     Local<Number> retVal = v8::Number::New(isolate, result);
     args.GetReturnValue().Set(retVal);
@@ -121,11 +122,64 @@ void CalculateResults(const v8::FunctionCallbackInfo<v8::Value>&args){
         pack_sunshine_results(isolate, result, results[i]);
         result_list->Set(i, result);
     }
-
-
-    //send it back to node as the return Value
+    //send it back to node as the return value
     args.GetReturnValue().Set(result_list);
+}
 
+struct Work {
+    uv_work_t request;
+    Persistent<Function> callback;
+    std::vector<location> locations;
+    std::vector<sunshine_result> results;
+};
+
+static void WorkAsync(uv_work_t *req){
+
+    Work *work = static_cast<Work *>(req->data);
+    work->results.resize(work->locations.size());
+    std::transform(work->locations.begin(), work->locations.end(), work->results.begin(), calc_sunshine_stats);
+    //she needs some sleep
+    Sleep(3000);
+}
+
+static void WorkAsyncComplete(uv_work_t *req, int status){
+    Isolate * isolate = Isolate::GetCurrent();
+    v8::HandleScope handleScope(isolate);
+    Work * work = static_cast<Work *>(req->data);
+    //work has been done, pack results vector into local array on event threads stack
+    Local<Array> result_list = Array::New(isolate);
+    for (unsigned int i = 0; i < work->results.size(); i++){
+        Local<Object> result = Object::New(isolate);
+        pack_sunshine_results(isolate, result, work->results[i]);
+        result_list->Set(i, result);
+    }
+    //set up return arguments
+    Handle<Value> argv[] = { result_list };
+    //execute the callback
+    Local<Function>::New(isolate, work->callback)->Call(isolate->GetCurrentContext()->Global(), 1, argv);
+    //free up persistent function callback
+    work->callback.Reset();
+    delete work;
+}
+
+
+
+void CalculateResultsAsync(const v8::FunctionCallbackInfo<v8::Value>&args){
+    Isolate * isolate = args.GetIsolate();
+    Work * work = new Work();
+    work->request.data = work;
+    Local<Array> input = Local<Array>::Cast(args[0]);
+    unsigned int num_locations = input->Length();
+    for (unsigned int i = 0; i < num_locations; i++){
+        work->locations.push_back(unpack_location(isolate, Local<Object>::Cast(input->Get(i))));
+    }
+    //store callback from JS in work package so it is callable
+    Local<Function> callback = Local<Function>::Cast(args[1]);
+    work->callback.Reset(isolate, callback);
+    //kick of the worker thread to get the job done & invoke callback here
+    uv_queue_work(uv_default_loop(), &work->request, WorkAsync, WorkAsyncComplete);
+
+    args.GetReturnValue().Set(Undefined(isolate));
 }
 
 
@@ -135,6 +189,7 @@ void init(Handle<Object> exports, Handle<Object> module){
     NODE_SET_METHOD(exports, "simple_login_sync", SimpleLoginSync);
     NODE_SET_METHOD(exports, "sunshine_data", SunshineData);
     NODE_SET_METHOD(exports, "calculate_results", CalculateResults); //it's all about producing results: improve, improve, improve
+    NODE_SET_METHOD(exports, "calculate_results_async", CalculateResultsAsync);
 }
 
 //associate the module name with initialization logic

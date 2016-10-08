@@ -1,46 +1,73 @@
 var sunshine = require("./cpp/build/Release/sunshine");
 
-var random = function(max, min = 0){
-      return (Math.random() * (max - min) + min).toFixed(2);
+var random = function (max, min = 0) {
+    return (Math.random() * (max - min) + min).toFixed(2);
 }
 
 //build some dummy locations
 var locations = [];
 
-for (var i = 0; i < 10; i++){
+for (var i = 0; i < 10; i++) {
     var loc = {
         latitude: random(180),
         longitude: random(180),
-        samples : [
-            {date: "2016-10-01", sunshine: random(40,30)},
-            {date: "2016-10-02", sunshine: random(40,30)},
-            {date: "2016-10-03", sunshine: random(40,30)},
-            {date: "2016-10-04", sunshine: random(40,30)}
+        samples: [
+            { date: "2016-10-01", sunshine: random(40, 30) },
+            { date: "2016-10-02", sunshine: random(40, 30) },
+            { date: "2016-10-03", sunshine: random(40, 30) },
+            { date: "2016-10-04", sunshine: random(40, 30) }
         ]
     }
     locations.push(loc);
 }
+var show_sunshine_results = function (results) {
+    var i = 0;
+    results.forEach((result) => {
+        console.log(`Results for Location   ${i + 1}`);
+        console.log(`---------------------------`);
+        console.log(`\tLatititude:         ${locations[i].latitude}`);
+        console.log(`\tLongitude:          ${locations[i].longitude}`);
+        console.log(`\tMean Sunshine:      ${result.mean.toFixed(2)} °C`);
+        console.log(`\tMedian Sunshine:    ${result.median.toFixed(2)} °C`);
+        console.log(`\tStandard Deviation: ${result.standard_deviation.toFixed(2)}  °C`);
+        console.log(`\tNumber of Samples:  ${result.n}`);
+        console.log();
+        i++;
+    });
+}
 
-//console.log(locations);
+setInterval(function() {
+  console.log('The Javascript thread is free to continue its work, we want results ...');
+}, 500);
+
+sunshine.calculate_results_async(locations, (results) => {
+    show_sunshine_results(results);
+    process.exit();
+});
+console.log('Calculate_Results_Async started.')
+
+
+
+
 
 //invoke the addon, it's all about producing results and having fun in the process => ingenuity for life is our flag
-var results = sunshine.calculate_results(locations);
+// var results = sunshine.calculate_results(locations);
 
 
-//report the results from c++
-var i = 0;
-results.forEach((result) => {
-    console.log(`Results for Location   ${i+1}`);
-    console.log(`---------------------------`);
-    console.log(`\tLatititude:         ${locations[i].latitude}`);
-    console.log(`\tLongitude:          ${locations[i].longitude}`);
-    console.log(`\tMean Sunshine:      ${result.mean.toFixed(2)} °C`);
-    console.log(`\tMedian Sunshine:    ${result.median.toFixed(2)} °C`);
-    console.log(`\tStandard Deviation: ${result.standard_deviation.toFixed(2)}  °C`);
-    console.log(`\tNumber of Samples:  ${result.n}`);
-    console.log();
-    i++;
-})
+// //report the results from c++
+// var i = 0;
+// results.forEach((result) => {
+//     console.log(`Results for Location   ${i+1}`);
+//     console.log(`---------------------------`);
+//     console.log(`\tLatititude:         ${locations[i].latitude}`);
+//     console.log(`\tLongitude:          ${locations[i].longitude}`);
+//     console.log(`\tMean Sunshine:      ${result.mean.toFixed(2)} °C`);
+//     console.log(`\tMedian Sunshine:    ${result.median.toFixed(2)} °C`);
+//     console.log(`\tStandard Deviation: ${result.standard_deviation.toFixed(2)}  °C`);
+//     console.log(`\tNumber of Samples:  ${result.n}`);
+//     console.log();
+//     i++;
+// })
 
 
 

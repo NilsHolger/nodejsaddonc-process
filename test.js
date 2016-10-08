@@ -1,9 +1,4 @@
 
-
-var makeup = function(max){
-    return Math.round(max * Math.random() * 100 ) / 100;
-}
-
 function getRandom(max, min = 0) {
   return (Math.random() * (max - min) + min).toFixed(2);
 }
